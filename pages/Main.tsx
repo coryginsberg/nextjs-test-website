@@ -1,65 +1,65 @@
 import React, { Component, useEffect, useState } from "react";
-// import { PostInfo } from "./HackerNewsApi";
-// import * as HackerNewsApi from './HackerNewsApi';
+import { PostInfo } from "./HackerNewsApi";
+import * as HackerNewsApi from "./HackerNewsApi";
 
-const BASE_URL = "https://hacker-news.firebaseio.com/v0";
+type Props = {}
 
-export default function Main() {
-  // const [topResultIds, setTopResultIds] = useState<Array<number>>([]);
-  const [topResults, setTopResults] = useState(null);
+
+export default function Main({}: Props) {
+  const [topResults, setTopResults] = useState<PostInfo[]>([]);
   const [isLoading, setLoading] = useState(false);
 
   useEffect(() => {
     setLoading(true);
-
-    fetch(new URL(`${BASE_URL}/topstories.json`))
-      .then((response) => response.json())
-      .then((data) => 
-        fetch(`${BASE_URL}/item/${data[1]}.json`)
-      )
-      .then((res) => res.json())
-      .then((res) => {
-        setTopResults(res);
-        setLoading(false);
-      })
-      .catch((err) => console.error("Request failed", err));
+    (async () => {
+      const temp = await HackerNewsApi.genTopStories(10);
+      setTopResults(temp);
+      setLoading(false);
+    })();
   }, []);
 
   if (isLoading) return <p>Loading...</p>;
   if (!topResults) return <p>No data</p>;
 
+  const subhead = (result: PostInfo) => {
+    const time = calculateHowLongAgo(result.time);
+    return (
+      <h4>
+        {result.score} points by {result.by} {time} ago | {result.descendants}{" "}
+        comments
+      </h4>
+    );
+  };
+
+  const calculateHowLongAgo = (time: number) => {
+    const date = new Date(time * 1000);
+    const currentTime = new Date();
+    console.warn(date);
+    if (currentTime.getDay() - date.getDay() > 0) {
+      return Math.floor(currentTime.getDay() - date.getDay()) + " days";
+    } else if (currentTime.getHours() - date.getHours() > 0) {
+      return Math.floor(currentTime.getHours() - date.getHours()) + " hours";
+    } else if (currentTime.getMinutes() - date.getMinutes() > 0) {
+      return (
+        Math.floor(currentTime.getMinutes() - date.getMinutes()) + " minutes"
+      );
+    } else {
+      return (
+        Math.floor(currentTime.getSeconds() - date.getSeconds()) + " seconds"
+      );
+    }
+  };
+
   return (
-    <>
-      <div>{topResults.title}</div>
-      <style jsx>
-        {`
-          a {
-            color: inherit;
-            text-decoration: none;
-          }
-
-          .title a {
-            color: #0070f3;
-            text-decoration: none;
-          }
-
-          .title a:hover,
-          .title a:focus,
-          .title a:active {
-            text-decoration: underline;
-          }
-
-          .title {
-            margin: 0;
-            line-height: 1.15;
-            font-size: 4rem;
-          }
-
-          .title {
-            text-align: center;
-          }
-        `}
-      </style>
-    </>
+    <div className="root">
+      {topResults.map((result, key) => (
+        <div key={result.id}>
+          <h2 className="title">
+            {key + 1}. {result.title}
+          </h2>
+          {subhead(result)}
+        </div>
+      ))}
+    </div>
   );
 }

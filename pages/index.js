@@ -17,11 +17,12 @@ export default function Home() {
       <style jsx>{`
         .container {
           min-height: 100vh;
-          padding: 0 0.5rem;
+          width: 100%;
+          left: 0;
+          right: 0;
+          position: initial;
           display: flex;
-          flex-direction: column;
           justify-content: center;
-          align-items: center;
         }
       `}</style>
 

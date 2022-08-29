@@ -12,31 +12,29 @@ export interface PostInfo {
   type: string,
 }
 
+const awaitJson = (responses) => Promise.all(responses.map(response => {
+  if(response.ok) return response.json();
+  throw new Error(response.statusText);
+}));
+
 export async function genTopStories(
   limit: number | null = null
-): Promise<Array<number>> {
+): Promise<Array<PostInfo>> {
   return await fetch(new URL(`${BASE_URL}/topstories.json`))
     .then((response) => response.json())
     .then((data) => {
       if (limit != null) {
-        return data.slice(0, limit);
+        data = data.slice(0, limit);
       }
-      return data;
+      let promises = [];
+      for (const dat of data) {
+        promises.push(fetch(`${BASE_URL}/item/${dat}.json`));
+      }
+      return Promise.all(promises);
     })
+    .then(awaitJson)
     .catch((error) => {
       console.error(error);
       return [];
-    });
-}
-
-export async function genItemById(itemId: number): Promise<any> {
-  return await fetch(new URL(`${BASE_URL}/item/${itemId}.json`))
-    .then((response) => response.json())
-    .then((data) => {
-      console.log(data);
-      return data;
-    })
-    .catch(() => {
-      return;
     });
 }
